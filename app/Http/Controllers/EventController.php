@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\Models\Event;
+use App\Models\User;
 
 class EventController extends Controller
 {
@@ -52,8 +53,7 @@ class EventController extends Controller
             
             $events->image = $imageName;
 
-           
-            
+
 
         }
         
@@ -71,7 +71,8 @@ class EventController extends Controller
         
         $event = Event::FindOrFail($id);
 
-        return view('events.show', ['event' => $event]);
+        $eventOwner = User::where('id', $event->user_id)->first();
+        return view('events.show', ['event' => $event, 'eventOwner' => $eventOwner]);
 
     }
 
@@ -79,4 +80,70 @@ class EventController extends Controller
         return view('events.create');
     }
 
+    public function dashboard(){
+
+        $user = auth()->user();
+
+        $events = $user->events;
+        
+        
+
+        
+        return view('events.dashboard', ['events' => $events]);
+    }
+
+    public function destroy($id){
+
+        Event::findOrFail($id)->delete();
+
+        return redirect('/dashboard')->with('msg', 'Evento excluido com sucesso');
+
+    }
+
+    public function edit($id){
+
+        $event = Event::findOrFail($id);
+
+
+        return view('events.edit', ['event' => $event]);
+    }
+
+
+    public function update(Request $request){
+
+        $data = $request->all();
+
+
+        if($request->hasFile('image') && $request->image->isValid()){
+
+
+            $extension = $request->image->extension();
+
+            $imageName = md5($request->image->getClientOriginalName() . strtotime('now')) . "." . $extension;
+
+            $request->image->move(public_path('/img/events'), $imageName);
+            
+            $data['image'] = $imageName;
+
+
+        }
+        
+
+        Event::FindOrFail($request->id)->update($data);
+
+        return redirect('/dashboard')->with('msg', 'Evento editado com sucesso');
+
+    }
+
+
+    public function joinEvent($id){
+
+        $user = auth()->user();
+
+        $user->eventsAsParticipant()->attach($id);
+        
+        return redirect('/dashboard')->with('msg', 'Voce esta participando de um evento');
+    }
+
 }
+
