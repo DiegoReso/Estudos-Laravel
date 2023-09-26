@@ -86,10 +86,10 @@ class EventController extends Controller
 
         $events = $user->events;
         
-        
+        $eventsAsParticipant = $user->eventsAsParticipant;
 
         
-        return view('events.dashboard', ['events' => $events]);
+        return view('events.dashboard', ['events' => $events, 'eventsAsParticipant' => $eventsAsParticipant]);
     }
 
     public function destroy($id){
@@ -141,8 +141,10 @@ class EventController extends Controller
         $user = auth()->user();
 
         $user->eventsAsParticipant()->attach($id);
+
+        $event = Event::findOrFail($id);
         
-        return redirect('/dashboard')->with('msg', 'Voce esta participando de um evento');
+        return redirect('/dashboard')->with('msg', 'Voce esta participando de um evento ' . $event->title);
     }
 
 }
